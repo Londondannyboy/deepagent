@@ -316,7 +316,23 @@ The rebuild is successful when:
 
 ## References
 
-- [Deep Agents Docs](https://python.langchain.com/docs/langgraph)
+### LangChain Documentation (Primary)
+- [Deep Agents Overview](https://docs.langchain.com/oss/python/deepagents/overview) - Main docs
+- [Deep Agents Reference](https://reference.langchain.com/python/deepagents/) - API reference
+- [LangChain Academy: Deep Agents](https://academy.langchain.com/courses/deep-agents-with-langgraph) - Course
+- [Deep Agents Blog Post](https://www.blog.langchain.com/deep-agents/) - Architecture explanation
+- [Multi-Agent Applications](https://www.blog.langchain.com/building-multi-agent-applications-with-deep-agents/) - Subagent patterns
+- [Evaluating Deep Agents](https://www.blog.langchain.com/evaluating-deep-agents-our-learnings/) - Testing patterns
+
+### CopilotKit
 - [CopilotKit Deep Agents Integration](https://docs.copilotkit.ai/langgraph/deep-agents)
 - [AG-UI Protocol](https://docs.ag-ui.com)
+
+### Project Reference
 - [Current fractional.quest codebase](/Users/dankeegan/fractional.quest)
+
+### Key Deep Agents Features (from docs)
+1. **write_todos** - Built-in planning tool for breaking down complex tasks
+2. **Filesystem tools** - ls, read_file, write_file, edit_file for context management
+3. **task tool** - Spawn specialized subagents for context isolation
+4. **Store** - Persistent memory across threads via LangGraph's Store

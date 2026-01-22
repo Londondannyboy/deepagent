@@ -130,7 +130,20 @@ cd /Users/dankeegan/fractional.quest
 
 ## Reference Links
 
-- [Deep Agents Docs](https://python.langchain.com/docs/langgraph)
+### LangChain Documentation (USE THESE)
+- [Deep Agents Overview](https://docs.langchain.com/oss/python/deepagents/overview) - Main docs
+- [Deep Agents Reference](https://reference.langchain.com/python/deepagents/) - API reference
+- [LangChain Academy: Deep Agents](https://academy.langchain.com/courses/deep-agents-with-langgraph) - Course
+- [Multi-Agent Applications](https://www.blog.langchain.com/building-multi-agent-applications-with-deep-agents/) - Subagent patterns
+
+### CopilotKit
 - [CopilotKit Deep Agents](https://docs.copilotkit.ai/langgraph/deep-agents)
-- [LangGraph](https://langchain-ai.github.io/langgraph/)
+
+### Project
 - [Current fractional.quest](https://fractional.quest)
+
+### Key Deep Agents Features
+- **write_todos** - Built-in planning tool
+- **Filesystem tools** - ls, read_file, write_file, edit_file
+- **task tool** - Spawn subagents for context isolation
+- **Store** - Persistent memory across threads
