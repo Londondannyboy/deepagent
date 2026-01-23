@@ -1,20 +1,12 @@
 """
 Onboarding tools for the 6-step profile building process.
 
-These are HITL (Human-in-the-Loop) tools that:
-1. Present options to the user
-2. Collect and validate their response
-3. Update state and persist to database
-4. Return state snapshot for frontend sync
-
-The tools use LangGraph's interrupt() for HITL when needed.
+These tools validate user input and return structured data.
+State updates are handled by the graph's state management.
 """
 
 from typing import List, Optional
-from langchain.tools import tool
-from langgraph.types import interrupt
-
-from state import AgentState
+from langchain_core.tools import tool
 
 
 # ============================================
@@ -35,20 +27,19 @@ VALID_ROLES = [
 
 
 @tool
-def confirm_role_preference(role: str, state: AgentState) -> dict:
+def confirm_role_preference(role: str) -> dict:
     """
     Confirm the user's primary executive role preference.
+    Call this when the user tells you what role they're looking for.
 
     Args:
         role: The role type (cto, cfo, cmo, coo, cro, cpo, chro, ciso, other)
-        state: Current agent state
 
     Returns:
-        Updated state with role preference set
+        Confirmation of the role preference
     """
     role_lower = role.lower().strip()
 
-    # Validate role
     if role_lower not in VALID_ROLES:
         return {
             "success": False,
@@ -56,21 +47,11 @@ def confirm_role_preference(role: str, state: AgentState) -> dict:
             "valid_roles": VALID_ROLES,
         }
 
-    # Update state
-    state.onboarding.role_preference = role_lower
-    state.onboarding.current_step = "trinity"
-
-    # TODO: Persist to Neon database
-    # await save_profile_item(state.user.id, "role_preference", role_lower)
-
     return {
         "success": True,
-        "message": f"Great! I've noted that you're looking for {role.upper()} roles.",
+        "message": f"Role preference set to {role_lower.upper()}.",
         "role_preference": role_lower,
         "next_step": "trinity",
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-        },
     }
 
 
@@ -87,16 +68,16 @@ VALID_TRINITY = [
 
 
 @tool
-def confirm_trinity(engagement_type: str, state: AgentState) -> dict:
+def confirm_trinity(engagement_type: str) -> dict:
     """
-    Confirm the user's preferred engagement type (the "trinity").
+    Confirm the user's preferred engagement type.
+    Call this when the user indicates their preference for fractional, interim, or advisory roles.
 
     Args:
         engagement_type: fractional, interim, advisory, or all
-        state: Current agent state
 
     Returns:
-        Updated state with trinity preference set
+        Confirmation of the engagement type preference
     """
     engagement_lower = engagement_type.lower().strip()
 
@@ -107,18 +88,11 @@ def confirm_trinity(engagement_type: str, state: AgentState) -> dict:
             "valid_types": VALID_TRINITY,
         }
 
-    # Update state
-    state.onboarding.trinity = engagement_lower
-    state.onboarding.current_step = "experience"
-
     return {
         "success": True,
-        "message": f"Perfect! You're interested in {engagement_lower} roles.",
+        "message": f"Engagement type set to {engagement_lower}.",
         "trinity": engagement_lower,
         "next_step": "experience",
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-        },
     }
 
 
@@ -127,21 +101,17 @@ def confirm_trinity(engagement_type: str, state: AgentState) -> dict:
 # ============================================
 
 @tool
-def confirm_experience(
-    years: int,
-    industries: List[str],
-    state: AgentState
-) -> dict:
+def confirm_experience(years: int, industries: List[str]) -> dict:
     """
     Confirm the user's experience level and industries.
+    Call this when the user shares their years of experience and industry background.
 
     Args:
         years: Years of executive experience
         industries: List of industries they have experience in
-        state: Current agent state
 
     Returns:
-        Updated state with experience information
+        Confirmation of experience details
     """
     if years < 0:
         return {
@@ -149,20 +119,12 @@ def confirm_experience(
             "error": "Years of experience must be a positive number",
         }
 
-    # Update state
-    state.onboarding.years_experience = years
-    state.onboarding.industries = industries
-    state.onboarding.current_step = "location"
-
     return {
         "success": True,
-        "message": f"Excellent! {years} years of experience across {', '.join(industries)}.",
+        "message": f"{years} years of experience across {', '.join(industries)}.",
         "years_experience": years,
         "industries": industries,
         "next_step": "location",
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-        },
     }
 
 
@@ -179,21 +141,17 @@ VALID_REMOTE_PREFS = [
 
 
 @tool
-def confirm_location(
-    location: str,
-    remote_preference: str,
-    state: AgentState
-) -> dict:
+def confirm_location(location: str, remote_preference: str) -> dict:
     """
     Confirm the user's location and remote work preferences.
+    Call this when the user shares where they are based and their work arrangement preference.
 
     Args:
         location: City, region, or country
         remote_preference: remote, hybrid, onsite, or flexible
-        state: Current agent state
 
     Returns:
-        Updated state with location information
+        Confirmation of location details
     """
     remote_lower = remote_preference.lower().strip()
 
@@ -204,20 +162,12 @@ def confirm_location(
             "valid_preferences": VALID_REMOTE_PREFS,
         }
 
-    # Update state
-    state.onboarding.location = location
-    state.onboarding.remote_preference = remote_lower
-    state.onboarding.current_step = "search_prefs"
-
     return {
         "success": True,
-        "message": f"Got it! Based in {location} with {remote_lower} work preference.",
+        "message": f"Based in {location} with {remote_lower} work preference.",
         "location": location,
         "remote_preference": remote_lower,
         "next_step": "search_prefs",
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-        },
     }
 
 
@@ -229,34 +179,25 @@ def confirm_location(
 def confirm_search_prefs(
     target_compensation: Optional[str],
     availability: str,
-    state: AgentState
 ) -> dict:
     """
-    Confirm the user's search preferences (compensation, availability).
+    Confirm the user's search preferences including compensation and availability.
+    Call this when the user shares their salary expectations and when they can start.
 
     Args:
         target_compensation: Target compensation range (e.g., "$200-300k", "open")
-        availability: When they can start (immediately, 2_weeks, 1_month, etc.)
-        state: Current agent state
+        availability: When they can start (immediately, 2_weeks, 1_month, flexible)
 
     Returns:
-        Updated state with search preferences
+        Confirmation of search preferences
     """
-    # Update state
-    state.onboarding.target_compensation = target_compensation
-    state.onboarding.availability = availability
-    state.onboarding.current_step = "completed"
-
     return {
         "success": True,
-        "message": f"Perfect! You're looking for {target_compensation or 'competitive compensation'} "
-                   f"and can start {availability.replace('_', ' ')}.",
+        "message": f"Looking for {target_compensation or 'competitive compensation'}, "
+                   f"available {availability.replace('_', ' ')}.",
         "target_compensation": target_compensation,
         "availability": availability,
         "next_step": "completed",
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-        },
     }
 
 
@@ -265,44 +206,16 @@ def confirm_search_prefs(
 # ============================================
 
 @tool
-def complete_onboarding(state: AgentState) -> dict:
+def complete_onboarding() -> dict:
     """
-    Mark onboarding as complete and summarize the user's profile.
-
-    Args:
-        state: Current agent state
+    Mark onboarding as complete. Call this after all 6 steps have been completed
+    and the user has confirmed their profile information.
 
     Returns:
-        Summary of the completed profile
+        Confirmation that onboarding is complete
     """
-    state.onboarding.completed = True
-    state.onboarding.current_step = "completed"
-    state.user.profile_complete = True
-
-    profile_summary = {
-        "role": state.onboarding.role_preference,
-        "engagement_type": state.onboarding.trinity,
-        "experience": {
-            "years": state.onboarding.years_experience,
-            "industries": state.onboarding.industries,
-        },
-        "location": {
-            "base": state.onboarding.location,
-            "remote_preference": state.onboarding.remote_preference,
-        },
-        "search_preferences": {
-            "compensation": state.onboarding.target_compensation,
-            "availability": state.onboarding.availability,
-        },
-    }
-
     return {
         "success": True,
         "message": "Your profile is complete! I can now help you find matching opportunities.",
-        "profile_summary": profile_summary,
         "onboarding_completed": True,
-        "state_snapshot": {
-            "onboarding": state.onboarding.model_dump(),
-            "user": state.user.model_dump(),
-        },
     }
