@@ -97,6 +97,7 @@ graph = create_agent(
     model="google_genai:gemini-2.0-flash",
     tools=ALL_TOOLS,
     middleware=[CopilotKitMiddleware()],
+    state_schema=AgentState,
     checkpointer=checkpointer,
     system_prompt=ORCHESTRATOR_PROMPT,
 )
